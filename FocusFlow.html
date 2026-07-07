@@ -1051,7 +1051,9 @@
                 text: text,
                 priority: priority,
                 completed: false,
-                createdAt: new Date().toISOString()
+                createdAt: new Date().toISOString(),
+                subtasks: [],
+                status: 'not-started'
             };
 
             state.tasks.push(task);
@@ -1060,6 +1062,157 @@
             renderTasks();
             updateTimerTaskSelect();
             playSound('add');
+        }
+
+        function addSubtask(taskId) {
+            const input = document.getElementById(`subtask-input-${taskId}`);
+            const text = input.value.trim();
+
+            if (!text) return;
+
+            const task = state.tasks.find(t => t.id === taskId);
+            if (task) {
+                if (!task.subtasks) task.subtasks = [];
+
+                task.subtasks.push({
+                    id: Date.now(),
+                    text: text,
+                    completed: false
+                });
+
+                input.value = '';
+                saveData();
+                renderTasks();
+                playSound('add');
+            }
+        }
+
+        function toggleSubtask(taskId, subtaskId) {
+            const task = state.tasks.find(t => t.id === taskId);
+            if (task && task.subtasks) {
+                const subtask = task.subtasks.find(s => s.id === subtaskId);
+                if (subtask) {
+                    subtask.completed = !subtask.completed;
+
+                    // Auto-update task completion if all subtasks done
+                    const allDone = task.subtasks.every(s => s.completed);
+                    if (allDone && task.subtasks.length > 0) {
+                        task.completed = true;
+                        celebrate();
+                    }
+
+                    saveData();
+                    renderTasks();
+                    updateStats();
+                }
+            }
+        }
+
+        function deleteSubtask(taskId, subtaskId) {
+            const task = state.tasks.find(t => t.id === taskId);
+            if (task && task.subtasks) {
+                task.subtasks = task.subtasks.filter(s => s.id !== subtaskId);
+                saveData();
+                renderTasks();
+            }
+        }
+
+        function toggleTaskExpand(taskId) {
+            const subtaskPanel = document.getElementById(`subtasks-${taskId}`);
+            if (subtaskPanel) {
+                subtaskPanel.classList.toggle('hidden');
+                const arrow = document.getElementById(`arrow-${taskId}`);
+                if (arrow) {
+                    arrow.textContent = subtaskPanel.classList.contains('hidden') ? '▶' : '▼';
+                }
+            }
+        }
+
+        function updateTaskStatus(taskId, status) {
+            const task = state.tasks.find(t => t.id === taskId);
+            if (task) {
+                task.status = status;
+                saveData();
+                renderTasks();
+            }
+        }
+
+        async function aiGenerateSubtasks(taskId) {
+            const task = state.tasks.find(t => t.id === taskId);
+            if (!task) return;
+
+            const btn = document.getElementById(`ai-subtask-btn-${taskId}`);
+            btn.textContent = '🤖 Generating...';
+            btn.disabled = true;
+
+            try {
+                const prompt = `Break down this task into 3-5 actionable subtasks:
+
+Task: "${task.text}"
+Priority: ${task.priority}
+
+Provide ONLY a JSON array of subtask strings, nothing else:
+["Subtask 1", "Subtask 2", "Subtask 3"]
+
+Make subtasks specific, measurable, and sequential.`;
+
+                const response = await fetch(PORTKEY_CONFIG.baseURL + '/v1/chat/completions', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'x-portkey-api-key': PORTKEY_CONFIG.apiKey
+                    },
+                    body: JSON.stringify({
+                        model: PORTKEY_CONFIG.defaultModel,
+                        messages: [{ role: 'user', content: prompt }],
+                        max_tokens: 500,
+                        temperature: 0.7
+                    })
+                });
+
+                const data = await response.json();
+                const content = data.choices[0].message.content;
+
+                let subtasks;
+                try {
+                    // Try to parse JSON array
+                    const jsonMatch = content.match(/\[[\s\S]*?\]/);
+                    if (jsonMatch) {
+                        subtasks = JSON.parse(jsonMatch[0]);
+                    } else {
+                        subtasks = JSON.parse(content);
+                    }
+                } catch {
+                    // Fallback: split by lines
+                    subtasks = content.split('\n')
+                        .map(line => line.trim())
+                        .filter(line => line && !line.startsWith('[') && !line.startsWith(']'))
+                        .map(line => line.replace(/^["\-•\d.]+\s*/, '').replace(/[",]$/,  ''));
+                }
+
+                // Add generated subtasks
+                if (!task.subtasks) task.subtasks = [];
+                subtasks.forEach(text => {
+                    task.subtasks.push({
+                        id: Date.now() + Math.random(),
+                        text: text,
+                        completed: false
+                    });
+                });
+
+                saveData();
+                renderTasks();
+                celebrate();
+
+                btn.textContent = '✨ AI Subtasks';
+                btn.disabled = false;
+
+            } catch (error) {
+                console.error('AI subtask generation error:', error);
+                alert('Failed to generate subtasks. Please try again.');
+                btn.textContent = '✨ AI Subtasks';
+                btn.disabled = false;
+            }
         }
 
         function handleTaskEnter(event) {
@@ -1113,15 +1266,64 @@
                 return;
             }
 
-            container.innerHTML = state.tasks.map(task => `
-                <div class="task-item ${task.completed ? 'completed' : ''}">
-                    <input type="checkbox" class="task-checkbox" ${task.completed ? 'checked' : ''}
-                           onchange="toggleTask(${task.id})">
-                    <div class="task-text">${escapeHtml(task.text)}</div>
-                    <span class="task-priority priority-${task.priority}">${task.priority}</span>
-                    <button class="task-delete" onclick="deleteTask(${task.id})">🗑️</button>
+            container.innerHTML = state.tasks.map(task => {
+                const subtaskCount = task.subtasks ? task.subtasks.length : 0;
+                const completedSubtasks = task.subtasks ? task.subtasks.filter(s => s.completed).length : 0;
+                const hasSubtasks = subtaskCount > 0;
+
+                return `
+                <div class="task-item-wrapper" style="margin-bottom: 15px;">
+                    <div class="task-item ${task.completed ? 'completed' : ''}" style="cursor: pointer;">
+                        ${hasSubtasks ? `<span id="arrow-${task.id}" onclick="event.stopPropagation(); toggleTaskExpand(${task.id})" style="cursor: pointer; margin-right: 8px; user-select: none;">▶</span>` : ''}
+                        <input type="checkbox" class="task-checkbox" ${task.completed ? 'checked' : ''}
+                               onchange="toggleTask(${task.id})" onclick="event.stopPropagation()">
+                        <div class="task-text" onclick="toggleTaskExpand(${task.id})">${escapeHtml(task.text)}</div>
+                        ${hasSubtasks ? `<span style="font-size: 0.85em; opacity: 0.7; margin-left: 10px;">${completedSubtasks}/${subtaskCount}</span>` : ''}
+                        <span class="task-priority priority-${task.priority}">${task.priority}</span>
+
+                        <select onchange="updateTaskStatus(${task.id}, this.value)" onclick="event.stopPropagation()"
+                                style="background: var(--bg-secondary); color: var(--text-primary); border: 1px solid var(--bg-card); padding: 4px 8px; border-radius: 5px; font-size: 0.85em; margin-left: 8px;">
+                            <option value="not-started" ${(task.status || 'not-started') === 'not-started' ? 'selected' : ''}>Not Started</option>
+                            <option value="in-progress" ${task.status === 'in-progress' ? 'selected' : ''}>In Progress</option>
+                            <option value="blocked" ${task.status === 'blocked' ? 'selected' : ''}>Blocked</option>
+                            <option value="done" ${task.status === 'done' ? 'selected' : ''}>Done</option>
+                        </select>
+
+                        <button class="task-delete" onclick="event.stopPropagation(); deleteTask(${task.id})">🗑️</button>
+                    </div>
+
+                    <div id="subtasks-${task.id}" class="hidden" style="margin-left: 40px; margin-top: 10px; padding: 10px; background: rgba(255,255,255,0.03); border-radius: 8px;">
+                        ${hasSubtasks ? `
+                            <div style="margin-bottom: 10px;">
+                                <div style="background: var(--bg-card); height: 6px; border-radius: 10px; overflow: hidden;">
+                                    <div style="width: ${subtaskCount > 0 ? (completedSubtasks / subtaskCount * 100) : 0}%; height: 100%; background: var(--success); transition: width 0.3s;"></div>
+                                </div>
+                                <p style="font-size: 0.85em; opacity: 0.7; margin-top: 5px;">Subtasks: ${completedSubtasks}/${subtaskCount} complete</p>
+                            </div>
+                        ` : ''}
+
+                        ${task.subtasks && task.subtasks.length > 0 ? task.subtasks.map(subtask => `
+                            <div style="display: flex; align-items: center; gap: 10px; padding: 8px; margin: 5px 0; background: var(--bg-card); border-radius: 6px;">
+                                <input type="checkbox" ${subtask.completed ? 'checked' : ''}
+                                       onchange="toggleSubtask(${task.id}, ${subtask.id})"
+                                       style="width: 18px; height: 18px; accent-color: var(--success);">
+                                <span style="flex: 1; ${subtask.completed ? 'text-decoration: line-through; opacity: 0.6;' : ''}">${escapeHtml(subtask.text)}</span>
+                                <button onclick="deleteSubtask(${task.id}, ${subtask.id})"
+                                        style="background: none; border: none; color: var(--accent); cursor: pointer; opacity: 0.6; padding: 4px;">✕</button>
+                            </div>
+                        `).join('') : '<p style="font-size: 0.9em; opacity: 0.6; margin-bottom: 10px;">No subtasks yet</p>'}
+
+                        <div style="display: flex; gap: 8px; margin-top: 10px;">
+                            <input type="text" id="subtask-input-${task.id}"
+                                   placeholder="Add a subtask..."
+                                   onkeypress="if(event.key==='Enter') addSubtask(${task.id})"
+                                   style="flex: 1; background: var(--bg-secondary); border: 1px solid var(--bg-card); color: var(--text-primary); padding: 8px; border-radius: 6px; font-size: 0.9em;">
+                            <button onclick="addSubtask(${task.id})" class="btn btn-small" style="padding: 6px 12px;">Add</button>
+                            <button id="ai-subtask-btn-${task.id}" onclick="aiGenerateSubtasks(${task.id})" class="btn btn-small" style="padding: 6px 12px; background: var(--gradient);">✨ AI Subtasks</button>
+                        </div>
+                    </div>
                 </div>
-            `).join('');
+            `}).join('');
         }
 
         // ==================== TOMORROW TASKS ====================
