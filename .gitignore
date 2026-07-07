@@ -1,0 +1,64 @@
+# FocusFlow .gitignore
+
+# OS Files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Editor Files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Backup Files
+*.bak
+*.tmp
+~$*
+
+# Word temp files
+~$*.docx
+
+# Generated reminder script
+Show-FocusFlow-Reminder.ps1
+
+# Personal data (if user creates backup files)
+focusflow-backup-*.json
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Temporary files from other projects
+Backup/
+communication-tracker/
+divine-gifts-website/
+email-inbox-tracker/
+flowmind-mvp/
+github-code-assistant/
+Github-SNOW\ -SNAP\ agent/
+indian-ai-cloud-companies/
+learning-platform/
+stock-analyzer/
+
+# Documentation drafts
+*_DRAFT.md
+*_WIP.md
+
+# Node modules (if any)
+node_modules/
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+.Python
+venv/
+ENV/
+
+# Other generated files
+.env
+.env.local

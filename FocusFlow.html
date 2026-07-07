@@ -1,0 +1,1960 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FocusFlow - Your Daily Productivity Companion</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --bg-primary: #1a1a2e;
+            --bg-secondary: #16213e;
+            --bg-card: #0f3460;
+            --accent: #e94560;
+            --accent-light: #ff6b8a;
+            --text-primary: #eee;
+            --text-secondary: #aaa;
+            --success: #00d4aa;
+            --warning: #ffd93d;
+            --gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.6;
+            overflow-x: hidden;
+        }
+
+        #confetti-canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 9999;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        /* Header */
+        .header {
+            background: var(--gradient);
+            padding: 30px;
+            border-radius: 20px;
+            margin-bottom: 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+        }
+
+        .header-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .date-display {
+            font-size: 1.1em;
+            opacity: 0.9;
+        }
+
+        .stats-row {
+            display: flex;
+            gap: 20px;
+            flex-wrap: wrap;
+        }
+
+        .stat-card {
+            background: rgba(255,255,255,0.1);
+            padding: 15px 25px;
+            border-radius: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            backdrop-filter: blur(10px);
+        }
+
+        .stat-card .icon {
+            font-size: 2em;
+        }
+
+        .stat-card .value {
+            font-size: 1.8em;
+            font-weight: bold;
+        }
+
+        .stat-card .label {
+            font-size: 0.9em;
+            opacity: 0.8;
+        }
+
+        /* Quote */
+        .quote-section {
+            background: var(--bg-secondary);
+            padding: 20px;
+            border-radius: 15px;
+            margin-bottom: 30px;
+            border-left: 4px solid var(--accent);
+            font-style: italic;
+            font-size: 1.1em;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+
+        /* Main Grid */
+        .main-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin-bottom: 30px;
+        }
+
+        @media (max-width: 1200px) {
+            .main-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .panel {
+            background: var(--bg-secondary);
+            padding: 25px;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+        }
+
+        .panel-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid var(--bg-card);
+        }
+
+        .panel-header h2 {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 1.8em;
+        }
+
+        /* Buttons */
+        .btn {
+            background: var(--accent);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 1em;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn:hover {
+            background: var(--accent-light);
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(233, 69, 96, 0.4);
+        }
+
+        .btn-secondary {
+            background: var(--bg-card);
+        }
+
+        .btn-secondary:hover {
+            background: #1a4d7a;
+        }
+
+        .btn-success {
+            background: var(--success);
+        }
+
+        .btn-small {
+            padding: 8px 16px;
+            font-size: 0.9em;
+        }
+
+        /* Input */
+        .input-group {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        input[type="text"], input[type="number"], textarea {
+            background: var(--bg-card);
+            border: 2px solid transparent;
+            color: var(--text-primary);
+            padding: 12px;
+            border-radius: 10px;
+            font-size: 1em;
+            flex: 1;
+            transition: all 0.3s ease;
+        }
+
+        input:focus, textarea:focus {
+            outline: none;
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px rgba(233, 69, 96, 0.1);
+        }
+
+        /* Tasks */
+        .task-list {
+            max-height: 500px;
+            overflow-y: auto;
+            padding-right: 10px;
+        }
+
+        .task-item {
+            background: var(--bg-card);
+            padding: 15px;
+            border-radius: 12px;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .task-item:hover {
+            transform: translateX(5px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+        }
+
+        .task-item.completed {
+            opacity: 0.6;
+        }
+
+        .task-item.completed .task-text {
+            text-decoration: line-through;
+        }
+
+        .task-checkbox {
+            width: 24px;
+            height: 24px;
+            cursor: pointer;
+            accent-color: var(--success);
+        }
+
+        .task-text {
+            flex: 1;
+            font-size: 1.1em;
+        }
+
+        .task-priority {
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.85em;
+            font-weight: bold;
+        }
+
+        .priority-high {
+            background: var(--accent);
+        }
+
+        .priority-medium {
+            background: var(--warning);
+            color: #333;
+        }
+
+        .priority-low {
+            background: var(--bg-secondary);
+        }
+
+        .task-delete {
+            background: none;
+            border: none;
+            color: var(--accent);
+            cursor: pointer;
+            font-size: 1.2em;
+            padding: 5px;
+            opacity: 0.6;
+            transition: opacity 0.3s;
+        }
+
+        .task-delete:hover {
+            opacity: 1;
+        }
+
+        /* Goals */
+        .goal-item {
+            background: var(--bg-card);
+            padding: 20px;
+            border-radius: 12px;
+            margin-bottom: 15px;
+        }
+
+        .goal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+            cursor: pointer;
+        }
+
+        .goal-title {
+            font-size: 1.2em;
+            font-weight: bold;
+        }
+
+        .goal-progress {
+            width: 100%;
+            height: 8px;
+            background: var(--bg-secondary);
+            border-radius: 10px;
+            overflow: hidden;
+            margin-bottom: 15px;
+        }
+
+        .goal-progress-bar {
+            height: 100%;
+            background: var(--gradient);
+            transition: width 0.5s ease;
+        }
+
+        .goal-steps {
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 1px solid var(--bg-secondary);
+        }
+
+        .goal-step {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 8px 0;
+        }
+
+        .goal-step input[type="checkbox"] {
+            width: 20px;
+            height: 20px;
+            accent-color: var(--success);
+        }
+
+        .add-step-input {
+            margin-top: 10px;
+        }
+
+        /* Timer */
+        .timer-display {
+            text-align: center;
+            padding: 40px;
+        }
+
+        .timer-time {
+            font-size: 4em;
+            font-weight: bold;
+            background: var(--gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin: 20px 0;
+        }
+
+        .timer-controls {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .timer-task {
+            background: var(--bg-card);
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        /* Progress Ring */
+        .progress-ring {
+            width: 120px;
+            height: 120px;
+            position: relative;
+        }
+
+        .progress-ring svg {
+            transform: rotate(-90deg);
+        }
+
+        .progress-ring circle {
+            fill: none;
+            stroke-width: 8;
+        }
+
+        .progress-ring .background {
+            stroke: var(--bg-card);
+        }
+
+        .progress-ring .progress {
+            stroke: var(--accent);
+            stroke-linecap: round;
+            transition: stroke-dashoffset 0.5s ease;
+        }
+
+        .progress-ring-text {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 1.5em;
+            font-weight: bold;
+        }
+
+        /* Scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: var(--bg-secondary);
+            border-radius: 10px;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: var(--accent);
+            border-radius: 10px;
+        }
+
+        /* Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.8);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: var(--bg-secondary);
+            padding: 40px;
+            border-radius: 20px;
+            max-width: 600px;
+            width: 90%;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .modal-close {
+            background: none;
+            border: none;
+            color: var(--text-primary);
+            font-size: 2em;
+            cursor: pointer;
+            padding: 0;
+            width: 40px;
+            height: 40px;
+        }
+
+        /* Evening Mode */
+        .evening-banner {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 20px;
+            border-radius: 15px;
+            margin-bottom: 20px;
+            text-align: center;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.02); }
+        }
+
+        /* Utilities */
+        .hidden {
+            display: none !important;
+        }
+
+        .mt-20 {
+            margin-top: 20px;
+        }
+
+        .mb-20 {
+            margin-bottom: 20px;
+        }
+
+        .text-center {
+            text-align: center;
+        }
+
+        .flex-between {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 40px;
+            opacity: 0.6;
+        }
+
+        .empty-state-icon {
+            font-size: 4em;
+            margin-bottom: 15px;
+        }
+
+        select {
+            background: var(--bg-card);
+            color: var(--text-primary);
+            border: 2px solid transparent;
+            padding: 12px;
+            border-radius: 10px;
+            font-size: 1em;
+            cursor: pointer;
+        }
+
+        select:focus {
+            outline: none;
+            border-color: var(--accent);
+        }
+    </style>
+</head>
+<body>
+    <canvas id="confetti-canvas"></canvas>
+
+    <div class="container">
+        <!-- Header -->
+        <div class="header">
+            <div class="header-top">
+                <h1>🚀 FocusFlow</h1>
+                <div class="date-display" id="dateDisplay"></div>
+            </div>
+            <div class="stats-row">
+                <div class="stat-card">
+                    <div class="icon">🔥</div>
+                    <div>
+                        <div class="value" id="streakValue">0</div>
+                        <div class="label">Day Streak</div>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="icon">⭐</div>
+                    <div>
+                        <div class="value" id="xpValue">0</div>
+                        <div class="label">Total XP</div>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="icon">📊</div>
+                    <div>
+                        <div class="value" id="levelValue">1</div>
+                        <div class="label">Level</div>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="icon">✅</div>
+                    <div>
+                        <div class="value"><span id="completedToday">0</span>/<span id="totalToday">0</span></div>
+                        <div class="label">Tasks Today</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Motivational Quote -->
+        <div class="quote-section" id="quoteDisplay">
+            "Your only limit is you."
+        </div>
+
+        <!-- Evening Banner -->
+        <div class="evening-banner hidden" id="eveningBanner">
+            <h3>🌙 Time to plan tomorrow!</h3>
+            <p>Take a moment to set up your tasks for a successful tomorrow.</p>
+            <button class="btn btn-success mt-20" onclick="openPlanTomorrow()">Plan Tomorrow</button>
+        </div>
+
+        <!-- Main Grid -->
+        <div class="main-grid">
+            <!-- Today's Tasks -->
+            <div class="panel">
+                <div class="panel-header">
+                    <h2>📝 Today's Tasks</h2>
+                    <button class="btn btn-small btn-secondary" onclick="clearCompleted()">Clear Completed</button>
+                </div>
+
+                <div class="input-group">
+                    <input type="text" id="newTaskInput" placeholder="What needs to be done?" onkeypress="handleTaskEnter(event)">
+                    <select id="taskPriority">
+                        <option value="low">Low</option>
+                        <option value="medium" selected>Medium</option>
+                        <option value="high">High</option>
+                    </select>
+                    <button class="btn" onclick="addTask()">Add</button>
+                </div>
+
+                <div class="task-list" id="taskList">
+                    <div class="empty-state">
+                        <div class="empty-state-icon">📋</div>
+                        <p>No tasks yet. Add one to get started!</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Focus Timer -->
+            <div class="panel">
+                <div class="panel-header">
+                    <h2>⏱️ Focus Timer</h2>
+                    <div>
+                        <button class="btn btn-small btn-secondary" onclick="showTimerSettings()">⚙️</button>
+                    </div>
+                </div>
+
+                <div class="timer-task" id="timerTaskDisplay">
+                    Select a task to focus on
+                </div>
+
+                <div class="timer-display">
+                    <div class="timer-time" id="timerDisplay">25:00</div>
+                    <div class="timer-controls">
+                        <button class="btn btn-success" id="startBtn" onclick="startTimer()">Start</button>
+                        <button class="btn btn-secondary hidden" id="pauseBtn" onclick="pauseTimer()">Pause</button>
+                        <button class="btn btn-secondary" onclick="resetTimer()">Reset</button>
+                    </div>
+                </div>
+
+                <div class="mt-20">
+                    <label>Focus on:</label>
+                    <select id="timerTaskSelect" style="width: 100%; margin-top: 10px;">
+                        <option value="">Select a task...</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Goals -->
+            <div class="panel">
+                <div class="panel-header">
+                    <h2>🎯 Goals</h2>
+                    <div style="display: flex; gap: 10px;">
+                        <button class="btn btn-small" onclick="openAIGoalParser()" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">✨ AI Goal</button>
+                        <button class="btn btn-small" onclick="openAddGoal()">+ Add Goal</button>
+                    </div>
+                </div>
+
+                <div id="goalsList">
+                    <div class="empty-state">
+                        <div class="empty-state-icon">🎯</div>
+                        <p>No goals yet. Set your first goal!</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Quick Actions -->
+            <div class="panel">
+                <div class="panel-header">
+                    <h2>⚡ Quick Actions</h2>
+                </div>
+
+                <div style="display: flex; flex-direction: column; gap: 15px;">
+                    <button class="btn" onclick="openPlanTomorrow()">🌙 Plan Tomorrow</button>
+                    <button class="btn btn-secondary" onclick="reviewGoals()">🔍 Review Goals</button>
+                    <button class="btn btn-secondary" onclick="exportData()">💾 Export Data</button>
+                    <button class="btn btn-secondary" onclick="importData()">📥 Import Data</button>
+                    <button class="btn btn-secondary" onclick="testReminder()">🔔 Test Reminder</button>
+                </div>
+
+                <div class="mt-20">
+                    <p style="opacity: 0.7; font-size: 0.9em;">
+                        💡 Tip: Break big goals into small daily steps!
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modals -->
+    <!-- Add Goal Modal -->
+    <div class="modal" id="addGoalModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>🎯 Add New Goal</h2>
+                <button class="modal-close" onclick="closeModal('addGoalModal')">&times;</button>
+            </div>
+            <div>
+                <label>Goal Name:</label>
+                <input type="text" id="goalNameInput" placeholder="e.g., Learn Spanish" style="width: 100%; margin-top: 10px;">
+
+                <label style="display: block; margin-top: 20px;">What's one small step you can do today?</label>
+                <input type="text" id="goalFirstStepInput" placeholder="e.g., Learn 10 new words" style="width: 100%; margin-top: 10px;">
+
+                <div class="mt-20">
+                    <button class="btn" onclick="saveGoal()">Save Goal</button>
+                    <button class="btn btn-secondary" onclick="closeModal('addGoalModal')">Cancel</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Plan Tomorrow Modal -->
+    <div class="modal" id="planTomorrowModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>🌙 Plan Tomorrow</h2>
+                <button class="modal-close" onclick="closeModal('planTomorrowModal')">&times;</button>
+            </div>
+            <div>
+                <p style="margin-bottom: 20px; opacity: 0.8;">Add tasks for tomorrow. They'll appear automatically when you open FocusFlow tomorrow!</p>
+
+                <div class="input-group">
+                    <input type="text" id="tomorrowTaskInput" placeholder="What do you want to accomplish tomorrow?" onkeypress="handleTomorrowEnter(event)">
+                    <button class="btn" onclick="addTomorrowTask()">Add</button>
+                </div>
+
+                <div id="tomorrowTaskList" class="task-list" style="max-height: 400px;">
+                    <div class="empty-state">
+                        <p>No tasks planned yet</p>
+                    </div>
+                </div>
+
+                <div class="mt-20">
+                    <button class="btn btn-secondary" onclick="closeModal('planTomorrowModal')">Done</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Timer Settings Modal -->
+    <div class="modal" id="timerSettingsModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>⚙️ Timer Settings</h2>
+                <button class="modal-close" onclick="closeModal('timerSettingsModal')">&times;</button>
+            </div>
+            <div>
+                <label>Focus Duration (minutes):</label>
+                <input type="number" id="focusDuration" value="25" min="1" max="60" style="width: 100%; margin-top: 10px;">
+
+                <label style="display: block; margin-top: 20px;">Break Duration (minutes):</label>
+                <input type="number" id="breakDuration" value="5" min="1" max="30" style="width: 100%; margin-top: 10px;">
+
+                <div class="mt-20">
+                    <button class="btn" onclick="saveTimerSettings()">Save</button>
+                    <button class="btn btn-secondary" onclick="closeModal('timerSettingsModal')">Cancel</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- AI Goal Parser Modal -->
+    <div class="modal" id="aiGoalModal">
+        <div class="modal-content" style="max-width: 700px;">
+            <div class="modal-header">
+                <h2>✨ AI Goal Parser</h2>
+                <button class="modal-close" onclick="closeModal('aiGoalModal')">&times;</button>
+            </div>
+            <div>
+                <p style="margin-bottom: 20px; opacity: 0.8;">
+                    Describe your goal in your own words. AI will break it down into actionable steps!
+                </p>
+
+                <label>What do you want to achieve?</label>
+                <textarea id="aiGoalInput"
+                    placeholder="Example: I want to learn Spanish fluently so I can travel to Spain next year. I need to improve my vocabulary, grammar, and conversation skills."
+                    style="width: 100%; height: 120px; margin-top: 10px; resize: vertical; font-family: inherit;"></textarea>
+
+                <div class="mt-20">
+                    <button class="btn" onclick="parseGoalStatement()" style="background: var(--gradient);">
+                        ✨ Parse with AI
+                    </button>
+                </div>
+
+                <!-- Loading State -->
+                <div id="aiGoalLoading" class="hidden" style="text-align: center; padding: 40px;">
+                    <div style="font-size: 3em; animation: pulse 1.5s infinite;">🤖</div>
+                    <p style="margin-top: 15px;">AI is analyzing your goal...</p>
+                </div>
+
+                <!-- Result State -->
+                <div id="aiGoalResult" class="hidden" style="margin-top: 30px;">
+                    <div style="background: var(--bg-card); padding: 20px; border-radius: 15px; margin-bottom: 20px;">
+                        <h3 style="margin-bottom: 15px;">📋 Parsed Goal</h3>
+                        <div style="background: var(--bg-secondary); padding: 15px; border-radius: 10px; margin-bottom: 15px;">
+                            <strong>Goal:</strong> <span id="aiParsedGoalName"></span>
+                        </div>
+
+                        <h4 style="margin-bottom: 10px;">✅ Suggested Steps:</h4>
+                        <ul id="aiParsedSteps" style="list-style: none; padding: 0;">
+                            <!-- Steps will be populated here -->
+                        </ul>
+
+                        <div id="aiSuggestionsSection" class="hidden" style="margin-top: 15px; background: rgba(255, 215, 0, 0.1); padding: 12px; border-radius: 8px; border-left: 3px solid var(--warning);">
+                            <strong>💡 Suggestion:</strong> <span id="aiSuggestions"></span>
+                        </div>
+
+                        <div style="margin-top: 15px; background: rgba(0, 212, 170, 0.1); padding: 12px; border-radius: 8px; border-left: 3px solid var(--success);">
+                            <strong>🎯 Start Today:</strong> <span id="aiDailyTask"></span>
+                        </div>
+                    </div>
+
+                    <!-- Enhancement Section -->
+                    <div style="margin-bottom: 20px;">
+                        <button class="btn btn-secondary" onclick="enhanceCurrentGoal()" id="enhanceBtn">
+                            ✨ Get AI Enhancement
+                        </button>
+                    </div>
+
+                    <div id="aiEnhanceLoading" class="hidden" style="text-align: center; padding: 20px;">
+                        <p>🤖 Analyzing and enhancing...</p>
+                    </div>
+
+                    <div id="aiEnhancementResult" class="hidden">
+                        <!-- Enhancement results will appear here -->
+                    </div>
+
+                    <!-- Action Buttons -->
+                    <div style="display: flex; gap: 10px; margin-top: 20px;">
+                        <button class="btn" onclick="createGoalFromAI()">
+                            🎯 Create This Goal
+                        </button>
+                        <button class="btn btn-secondary" onclick="parseGoalStatement()">
+                            🔄 Try Different Parsing
+                        </button>
+                        <button class="btn btn-secondary" onclick="closeModal('aiGoalModal')">
+                            Cancel
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ==================== DATA & STATE ====================
+        const QUOTES = [
+            "Your only limit is you.",
+            "Dream big. Start small. Act now.",
+            "Progress, not perfection.",
+            "Every expert was once a beginner.",
+            "Small steps every day lead to big changes.",
+            "You are capable of amazing things.",
+            "Focus on progress, not perfection.",
+            "The best time to start was yesterday. The next best time is now.",
+            "Believe you can and you're halfway there.",
+            "Don't watch the clock; do what it does. Keep going.",
+            "Success is the sum of small efforts repeated daily.",
+            "You don't have to be great to start, but you have to start to be great.",
+            "The harder you work, the luckier you get.",
+            "What you do today can improve all your tomorrows.",
+            "Strive for progress, not perfection.",
+            "Your future self will thank you.",
+            "Make each day your masterpiece.",
+            "The only way to do great work is to love what you do.",
+            "Start where you are. Use what you have. Do what you can.",
+            "Success is not final, failure is not fatal: it is the courage to continue that counts.",
+            "Don't count the days, make the days count.",
+            "The secret of getting ahead is getting started.",
+            "It always seems impossible until it's done.",
+            "You are never too old to set another goal or to dream a new dream.",
+            "If you want to achieve greatness, stop asking for permission.",
+            "The only impossible journey is the one you never begin.",
+            "Act as if what you do makes a difference. It does.",
+            "Success doesn't just find you. You have to go out and get it.",
+            "Don't wait for opportunity. Create it.",
+            "Sometimes we're tested not to show our weaknesses, but to discover our strengths.",
+            "The key to success is to focus on goals, not obstacles.",
+            "Dream it. Wish it. Do it.",
+            "Great things never come from comfort zones.",
+            "Don't stop when you're tired. Stop when you're done.",
+            "Wake up with determination. Go to bed with satisfaction.",
+            "Do something today that your future self will thank you for.",
+            "Little things make big days.",
+            "It's going to be hard, but hard does not mean impossible.",
+            "Don't tell people your plans. Show them your results.",
+            "We don't just sit around and wait for other people. We just make it happen ourselves.",
+            "Your limitation—it's only your imagination.",
+            "Sometimes later becomes never. Do it now.",
+            "Push yourself, because no one else is going to do it for you.",
+            "Work hard in silence, let your success be the noise.",
+            "The future depends on what you do today.",
+            "Don't be afraid to give up the good to go for the great.",
+            "Action is the foundational key to all success.",
+            "A journey of a thousand miles begins with a single step.",
+            "You are what you do, not what you say you'll do.",
+            "Stay focused and never give up."
+        ];
+
+        let state = {
+            tasks: [],
+            tomorrowTasks: [],
+            goals: [],
+            streak: 0,
+            bestStreak: 0,
+            xp: 0,
+            lastOpenDate: null,
+            completedTasksToday: 0,
+            settings: {
+                focusDuration: 25,
+                breakDuration: 5,
+                notificationsEnabled: false
+            },
+            timer: {
+                isRunning: false,
+                isPaused: false,
+                timeLeft: 25 * 60,
+                focusTask: null,
+                mode: 'focus' // 'focus' or 'break'
+            }
+        };
+
+        let timerInterval = null;
+        let reminderInterval = null;
+
+        // ==================== INITIALIZATION ====================
+        function init() {
+            loadData();
+            checkAndRolloverTasks();
+            updateUI();
+            showRandomQuote();
+            requestNotificationPermission();
+            setupHourlyReminder();
+            checkEveningMode();
+
+            // Check evening mode every hour
+            setInterval(checkEveningMode, 60 * 60 * 1000);
+        }
+
+        function loadData() {
+            const saved = localStorage.getItem('focusflow_data');
+            if (saved) {
+                const data = JSON.parse(saved);
+                state = { ...state, ...data };
+            }
+        }
+
+        function saveData() {
+            localStorage.setItem('focusflow_data', JSON.stringify(state));
+        }
+
+        function checkAndRolloverTasks() {
+            const today = new Date().toDateString();
+
+            if (state.lastOpenDate !== today) {
+                // New day - check streak
+                const lastDate = state.lastOpenDate ? new Date(state.lastOpenDate) : null;
+                const todayDate = new Date();
+
+                if (lastDate) {
+                    const daysDiff = Math.floor((todayDate - lastDate) / (1000 * 60 * 60 * 24));
+
+                    if (daysDiff === 1 && state.completedTasksToday > 0) {
+                        // Consecutive day with completed tasks
+                        state.streak++;
+                        if (state.streak > state.bestStreak) {
+                            state.bestStreak = state.streak;
+                        }
+                        celebrateStreak();
+                    } else if (daysDiff > 1) {
+                        // Missed a day
+                        state.streak = 0;
+                    }
+                }
+
+                // Roll over incomplete tasks
+                state.tasks = state.tasks.filter(t => !t.completed);
+
+                // Add tomorrow's tasks to today
+                if (state.tomorrowTasks && state.tomorrowTasks.length > 0) {
+                    state.tasks = [...state.tasks, ...state.tomorrowTasks];
+                    state.tomorrowTasks = [];
+                }
+
+                state.lastOpenDate = today;
+                state.completedTasksToday = 0;
+                saveData();
+            }
+        }
+
+        // ==================== UI UPDATES ====================
+        function updateUI() {
+            updateStats();
+            renderTasks();
+            renderGoals();
+            updateTimerTaskSelect();
+            updateDateDisplay();
+        }
+
+        function updateStats() {
+            document.getElementById('streakValue').textContent = state.streak;
+            document.getElementById('xpValue').textContent = state.xp;
+            document.getElementById('levelValue').textContent = Math.floor(Math.sqrt(state.xp / 10)) + 1;
+
+            const completed = state.tasks.filter(t => t.completed).length;
+            const total = state.tasks.length;
+            document.getElementById('completedToday').textContent = completed;
+            document.getElementById('totalToday').textContent = total;
+        }
+
+        function updateDateDisplay() {
+            const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+            document.getElementById('dateDisplay').textContent = new Date().toLocaleDateString('en-US', options);
+        }
+
+        function showRandomQuote() {
+            const quote = QUOTES[Math.floor(Math.random() * QUOTES.length)];
+            document.getElementById('quoteDisplay').textContent = `"${quote}"`;
+        }
+
+        // ==================== TASKS ====================
+        function addTask() {
+            const input = document.getElementById('newTaskInput');
+            const priority = document.getElementById('taskPriority').value;
+            const text = input.value.trim();
+
+            if (!text) return;
+
+            const task = {
+                id: Date.now(),
+                text: text,
+                priority: priority,
+                completed: false,
+                createdAt: new Date().toISOString()
+            };
+
+            state.tasks.push(task);
+            input.value = '';
+            saveData();
+            renderTasks();
+            updateTimerTaskSelect();
+            playSound('add');
+        }
+
+        function handleTaskEnter(event) {
+            if (event.key === 'Enter') {
+                addTask();
+            }
+        }
+
+        function toggleTask(id) {
+            const task = state.tasks.find(t => t.id === id);
+            if (task) {
+                task.completed = !task.completed;
+
+                if (task.completed) {
+                    state.xp += 10;
+                    state.completedTasksToday++;
+                    celebrate();
+                    playSound('complete');
+                }
+
+                saveData();
+                renderTasks();
+                updateStats();
+            }
+        }
+
+        function deleteTask(id) {
+            state.tasks = state.tasks.filter(t => t.id !== id);
+            saveData();
+            renderTasks();
+            updateTimerTaskSelect();
+        }
+
+        function clearCompleted() {
+            state.tasks = state.tasks.filter(t => !t.completed);
+            saveData();
+            renderTasks();
+            updateTimerTaskSelect();
+        }
+
+        function renderTasks() {
+            const container = document.getElementById('taskList');
+
+            if (state.tasks.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-state-icon">📋</div>
+                        <p>No tasks yet. Add one to get started!</p>
+                    </div>
+                `;
+                return;
+            }
+
+            container.innerHTML = state.tasks.map(task => `
+                <div class="task-item ${task.completed ? 'completed' : ''}">
+                    <input type="checkbox" class="task-checkbox" ${task.completed ? 'checked' : ''}
+                           onchange="toggleTask(${task.id})">
+                    <div class="task-text">${escapeHtml(task.text)}</div>
+                    <span class="task-priority priority-${task.priority}">${task.priority}</span>
+                    <button class="task-delete" onclick="deleteTask(${task.id})">🗑️</button>
+                </div>
+            `).join('');
+        }
+
+        // ==================== TOMORROW TASKS ====================
+        function openPlanTomorrow() {
+            document.getElementById('planTomorrowModal').classList.add('active');
+            renderTomorrowTasks();
+        }
+
+        function addTomorrowTask() {
+            const input = document.getElementById('tomorrowTaskInput');
+            const text = input.value.trim();
+
+            if (!text) return;
+
+            const task = {
+                id: Date.now(),
+                text: text,
+                priority: 'medium',
+                completed: false
+            };
+
+            if (!state.tomorrowTasks) state.tomorrowTasks = [];
+            state.tomorrowTasks.push(task);
+            input.value = '';
+            saveData();
+            renderTomorrowTasks();
+        }
+
+        function handleTomorrowEnter(event) {
+            if (event.key === 'Enter') {
+                addTomorrowTask();
+            }
+        }
+
+        function deleteTomorrowTask(id) {
+            state.tomorrowTasks = state.tomorrowTasks.filter(t => t.id !== id);
+            saveData();
+            renderTomorrowTasks();
+        }
+
+        function renderTomorrowTasks() {
+            const container = document.getElementById('tomorrowTaskList');
+
+            if (!state.tomorrowTasks || state.tomorrowTasks.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <p>No tasks planned yet</p>
+                    </div>
+                `;
+                return;
+            }
+
+            container.innerHTML = state.tomorrowTasks.map(task => `
+                <div class="task-item">
+                    <div class="task-text">${escapeHtml(task.text)}</div>
+                    <button class="task-delete" onclick="deleteTomorrowTask(${task.id})">🗑️</button>
+                </div>
+            `).join('');
+        }
+
+        function checkEveningMode() {
+            const hour = new Date().getHours();
+            const banner = document.getElementById('eveningBanner');
+
+            if (hour >= 18 && hour < 23) {
+                banner.classList.remove('hidden');
+            } else {
+                banner.classList.add('hidden');
+            }
+        }
+
+        // ==================== GOALS ====================
+        function openAddGoal() {
+            document.getElementById('addGoalModal').classList.add('active');
+            document.getElementById('goalNameInput').value = '';
+            document.getElementById('goalFirstStepInput').value = '';
+        }
+
+        function saveGoal() {
+            const name = document.getElementById('goalNameInput').value.trim();
+            const firstStep = document.getElementById('goalFirstStepInput').value.trim();
+
+            if (!name) return;
+
+            const goal = {
+                id: Date.now(),
+                name: name,
+                steps: firstStep ? [{ id: Date.now(), text: firstStep, completed: false }] : [],
+                createdAt: new Date().toISOString()
+            };
+
+            state.goals.push(goal);
+            saveData();
+            renderGoals();
+            closeModal('addGoalModal');
+
+            // If there's a first step, ask if they want to add it to today
+            if (firstStep) {
+                if (confirm('Add this step to today\'s tasks?')) {
+                    addTaskFromGoal(firstStep);
+                }
+            }
+        }
+
+        function addTaskFromGoal(text) {
+            const task = {
+                id: Date.now(),
+                text: text,
+                priority: 'medium',
+                completed: false,
+                createdAt: new Date().toISOString()
+            };
+
+            state.tasks.push(task);
+            saveData();
+            renderTasks();
+            updateTimerTaskSelect();
+        }
+
+        function deleteGoal(id) {
+            if (confirm('Delete this goal?')) {
+                state.goals = state.goals.filter(g => g.id !== id);
+                saveData();
+                renderGoals();
+            }
+        }
+
+        function toggleGoalStep(goalId, stepId) {
+            const goal = state.goals.find(g => g.id === goalId);
+            if (goal) {
+                const step = goal.steps.find(s => s.id === stepId);
+                if (step) {
+                    step.completed = !step.completed;
+                    if (step.completed) {
+                        state.xp += 5;
+                        playSound('complete');
+                    }
+                    saveData();
+                    renderGoals();
+                    updateStats();
+                }
+            }
+        }
+
+        function addGoalStep(goalId) {
+            const input = document.getElementById(`goal-step-input-${goalId}`);
+            const text = input.value.trim();
+
+            if (!text) return;
+
+            const goal = state.goals.find(g => g.id === goalId);
+            if (goal) {
+                goal.steps.push({
+                    id: Date.now(),
+                    text: text,
+                    completed: false
+                });
+                input.value = '';
+                saveData();
+                renderGoals();
+            }
+        }
+
+        function pushStepToToday(goalId, stepId) {
+            const goal = state.goals.find(g => g.id === goalId);
+            if (goal) {
+                const step = goal.steps.find(s => s.id === stepId);
+                if (step) {
+                    addTaskFromGoal(step.text);
+                }
+            }
+        }
+
+        function renderGoals() {
+            const container = document.getElementById('goalsList');
+
+            if (state.goals.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-state-icon">🎯</div>
+                        <p>No goals yet. Set your first goal!</p>
+                    </div>
+                `;
+                return;
+            }
+
+            container.innerHTML = state.goals.map(goal => {
+                const progress = goal.steps.length > 0
+                    ? (goal.steps.filter(s => s.completed).length / goal.steps.length) * 100
+                    : 0;
+
+                return `
+                    <div class="goal-item">
+                        <div class="goal-header" onclick="toggleGoalExpand(${goal.id})">
+                            <div class="goal-title">${escapeHtml(goal.name)}</div>
+                            <button class="task-delete" onclick="event.stopPropagation(); deleteGoal(${goal.id})">🗑️</button>
+                        </div>
+                        <div class="goal-progress">
+                            <div class="goal-progress-bar" style="width: ${progress}%"></div>
+                        </div>
+                        <div style="font-size: 0.9em; opacity: 0.8; margin-bottom: 10px;">
+                            ${goal.steps.filter(s => s.completed).length} / ${goal.steps.length} steps completed
+                        </div>
+                        <div class="goal-steps hidden" id="goal-steps-${goal.id}">
+                            ${goal.steps.map(step => `
+                                <div class="goal-step">
+                                    <input type="checkbox" ${step.completed ? 'checked' : ''}
+                                           onchange="toggleGoalStep(${goal.id}, ${step.id})">
+                                    <span style="flex: 1; ${step.completed ? 'text-decoration: line-through; opacity: 0.6;' : ''}">${escapeHtml(step.text)}</span>
+                                    <button class="btn btn-small" onclick="pushStepToToday(${goal.id}, ${step.id})">➜ Today</button>
+                                </div>
+                            `).join('')}
+                            <div class="add-step-input">
+                                <input type="text" id="goal-step-input-${goal.id}"
+                                       placeholder="Add a small step..."
+                                       onkeypress="if(event.key==='Enter') addGoalStep(${goal.id})">
+                                <button class="btn btn-small mt-20" onclick="addGoalStep(${goal.id})">Add Step</button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function toggleGoalExpand(goalId) {
+            const steps = document.getElementById(`goal-steps-${goalId}`);
+            steps.classList.toggle('hidden');
+        }
+
+        function reviewGoals() {
+            if (state.goals.length === 0) {
+                alert('No goals to review. Add some goals first!');
+                return;
+            }
+
+            let review = '🎯 GOALS REVIEW\n\n';
+            state.goals.forEach(goal => {
+                const completed = goal.steps.filter(s => s.completed).length;
+                const total = goal.steps.length;
+                const progress = total > 0 ? Math.round((completed / total) * 100) : 0;
+                review += `${goal.name}\n`;
+                review += `Progress: ${completed}/${total} steps (${progress}%)\n\n`;
+            });
+
+            alert(review);
+        }
+
+        // ==================== TIMER ====================
+        function updateTimerTaskSelect() {
+            const select = document.getElementById('timerTaskSelect');
+            const incompleteTasks = state.tasks.filter(t => !t.completed);
+
+            select.innerHTML = '<option value="">Select a task...</option>' +
+                incompleteTasks.map(t =>
+                    `<option value="${t.id}">${escapeHtml(t.text)}</option>`
+                ).join('');
+        }
+
+        function startTimer() {
+            const taskId = parseInt(document.getElementById('timerTaskSelect').value);
+            const task = taskId ? state.tasks.find(t => t.id === taskId) : null;
+
+            state.timer.focusTask = task;
+            state.timer.isRunning = true;
+            state.timer.isPaused = false;
+
+            document.getElementById('startBtn').classList.add('hidden');
+            document.getElementById('pauseBtn').classList.remove('hidden');
+
+            if (task) {
+                document.getElementById('timerTaskDisplay').textContent = `Focusing on: ${task.text}`;
+            }
+
+            timerInterval = setInterval(updateTimer, 1000);
+            playSound('start');
+        }
+
+        function pauseTimer() {
+            state.timer.isPaused = true;
+            state.timer.isRunning = false;
+            clearInterval(timerInterval);
+
+            document.getElementById('startBtn').classList.remove('hidden');
+            document.getElementById('pauseBtn').classList.add('hidden');
+        }
+
+        function resetTimer() {
+            clearInterval(timerInterval);
+            state.timer.isRunning = false;
+            state.timer.isPaused = false;
+            state.timer.timeLeft = state.settings.focusDuration * 60;
+            state.timer.mode = 'focus';
+
+            document.getElementById('startBtn').classList.remove('hidden');
+            document.getElementById('pauseBtn').classList.add('hidden');
+            document.getElementById('timerTaskDisplay').textContent = 'Select a task to focus on';
+
+            updateTimerDisplay();
+        }
+
+        function updateTimer() {
+            state.timer.timeLeft--;
+
+            if (state.timer.timeLeft <= 0) {
+                timerComplete();
+                return;
+            }
+
+            updateTimerDisplay();
+        }
+
+        function updateTimerDisplay() {
+            const minutes = Math.floor(state.timer.timeLeft / 60);
+            const seconds = state.timer.timeLeft % 60;
+            document.getElementById('timerDisplay').textContent =
+                `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+        }
+
+        function timerComplete() {
+            clearInterval(timerInterval);
+
+            if (state.timer.mode === 'focus') {
+                // Focus session completed
+                state.xp += 25;
+                celebrate();
+                playSound('complete');
+
+                if (Notification.permission === 'granted') {
+                    new Notification('Focus Session Complete! 🎉', {
+                        body: 'Great work! Time for a break.',
+                        icon: '⏱️'
+                    });
+                }
+
+                // Switch to break
+                state.timer.mode = 'break';
+                state.timer.timeLeft = state.settings.breakDuration * 60;
+                document.getElementById('timerTaskDisplay').textContent = 'Break time! Relax and recharge 🌟';
+            } else {
+                // Break completed
+                if (Notification.permission === 'granted') {
+                    new Notification('Break Over! 💪', {
+                        body: 'Ready to focus again?',
+                        icon: '⏱️'
+                    });
+                }
+
+                resetTimer();
+            }
+
+            state.timer.isRunning = false;
+            document.getElementById('startBtn').classList.remove('hidden');
+            document.getElementById('pauseBtn').classList.add('hidden');
+            updateTimerDisplay();
+            updateStats();
+            saveData();
+        }
+
+        function showTimerSettings() {
+            document.getElementById('focusDuration').value = state.settings.focusDuration;
+            document.getElementById('breakDuration').value = state.settings.breakDuration;
+            document.getElementById('timerSettingsModal').classList.add('active');
+        }
+
+        function saveTimerSettings() {
+            state.settings.focusDuration = parseInt(document.getElementById('focusDuration').value);
+            state.settings.breakDuration = parseInt(document.getElementById('breakDuration').value);
+
+            if (state.timer.mode === 'focus' && !state.timer.isRunning) {
+                state.timer.timeLeft = state.settings.focusDuration * 60;
+                updateTimerDisplay();
+            }
+
+            saveData();
+            closeModal('timerSettingsModal');
+        }
+
+        // ==================== NOTIFICATIONS ====================
+        function requestNotificationPermission() {
+            if ('Notification' in window && Notification.permission === 'default') {
+                Notification.requestPermission().then(permission => {
+                    state.settings.notificationsEnabled = permission === 'granted';
+                    saveData();
+                });
+            }
+        }
+
+        function setupHourlyReminder() {
+            // Calculate time until next hour
+            const now = new Date();
+            const msToNextHour = (60 - now.getMinutes()) * 60 * 1000 - now.getSeconds() * 1000;
+
+            // First reminder at next hour
+            setTimeout(() => {
+                showReminder();
+                // Then every hour
+                reminderInterval = setInterval(showReminder, 60 * 60 * 1000);
+            }, msToNextHour);
+        }
+
+        function showReminder() {
+            const quote = QUOTES[Math.floor(Math.random() * QUOTES.length)];
+
+            if (Notification.permission === 'granted') {
+                new Notification('⏰ FocusFlow Reminder', {
+                    body: `Check your tasks and goals!\n\n"${quote}"`,
+                    icon: '🚀',
+                    requireInteraction: false
+                });
+            }
+
+            playSound('reminder');
+        }
+
+        function testReminder() {
+            showReminder();
+        }
+
+        // ==================== CELEBRATIONS ====================
+        function celebrate() {
+            launchConfetti();
+            showRandomQuote();
+        }
+
+        function celebrateStreak() {
+            if (state.streak % 7 === 0) {
+                // Weekly milestone
+                state.xp += 50;
+                alert(`🔥 Amazing! ${state.streak} day streak!\n\n+50 bonus XP!`);
+            }
+            launchConfetti();
+        }
+
+        function launchConfetti() {
+            const canvas = document.getElementById('confetti-canvas');
+            const ctx = canvas.getContext('2d');
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+
+            const particles = [];
+            const colors = ['#e94560', '#667eea', '#764ba2', '#00d4aa', '#ffd93d'];
+
+            for (let i = 0; i < 50; i++) {
+                particles.push({
+                    x: Math.random() * canvas.width,
+                    y: Math.random() * canvas.height - canvas.height,
+                    r: Math.random() * 6 + 4,
+                    d: Math.random() * 5 + 1,
+                    color: colors[Math.floor(Math.random() * colors.length)],
+                    tilt: Math.random() * 10 - 10,
+                    tiltAngle: 0,
+                    tiltAngleIncrement: Math.random() * 0.07 + 0.05
+                });
+            }
+
+            let animationFrame;
+            function draw() {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+                particles.forEach((p, i) => {
+                    ctx.beginPath();
+                    ctx.lineWidth = p.r / 2;
+                    ctx.strokeStyle = p.color;
+                    ctx.moveTo(p.x + p.tilt + p.r, p.y);
+                    ctx.lineTo(p.x + p.tilt, p.y + p.tilt + p.r);
+                    ctx.stroke();
+
+                    p.tiltAngle += p.tiltAngleIncrement;
+                    p.y += (Math.cos(p.d) + 3 + p.r / 2) / 2;
+                    p.tilt = Math.sin(p.tiltAngle - i / 3) * 15;
+
+                    if (p.y > canvas.height) {
+                        particles.splice(i, 1);
+                    }
+                });
+
+                if (particles.length > 0) {
+                    animationFrame = requestAnimationFrame(draw);
+                } else {
+                    cancelAnimationFrame(animationFrame);
+                }
+            }
+
+            draw();
+        }
+
+        // ==================== SOUNDS ====================
+        function playSound(type) {
+            const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            const oscillator = audioContext.createOscillator();
+            const gainNode = audioContext.createGain();
+
+            oscillator.connect(gainNode);
+            gainNode.connect(audioContext.destination);
+
+            gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+
+            switch(type) {
+                case 'complete':
+                    oscillator.frequency.setValueAtTime(523.25, audioContext.currentTime); // C5
+                    oscillator.frequency.setValueAtTime(659.25, audioContext.currentTime + 0.1); // E5
+                    oscillator.frequency.setValueAtTime(783.99, audioContext.currentTime + 0.2); // G5
+                    gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.5);
+                    oscillator.start(audioContext.currentTime);
+                    oscillator.stop(audioContext.currentTime + 0.5);
+                    break;
+                case 'add':
+                    oscillator.frequency.setValueAtTime(440, audioContext.currentTime);
+                    gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.1);
+                    oscillator.start(audioContext.currentTime);
+                    oscillator.stop(audioContext.currentTime + 0.1);
+                    break;
+                case 'reminder':
+                    oscillator.frequency.setValueAtTime(523.25, audioContext.currentTime);
+                    oscillator.frequency.setValueAtTime(659.25, audioContext.currentTime + 0.15);
+                    gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.3);
+                    oscillator.start(audioContext.currentTime);
+                    oscillator.stop(audioContext.currentTime + 0.3);
+                    break;
+                case 'start':
+                    oscillator.frequency.setValueAtTime(392, audioContext.currentTime);
+                    gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.2);
+                    oscillator.start(audioContext.currentTime);
+                    oscillator.stop(audioContext.currentTime + 0.2);
+                    break;
+            }
+        }
+
+        // ==================== DATA MANAGEMENT ====================
+        function exportData() {
+            const dataStr = JSON.stringify(state, null, 2);
+            const dataBlob = new Blob([dataStr], { type: 'application/json' });
+            const url = URL.createObjectURL(dataBlob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `focusflow-backup-${new Date().toISOString().split('T')[0]}.json`;
+            link.click();
+        }
+
+        function importData() {
+            const input = document.createElement('input');
+            input.type = 'file';
+            input.accept = 'application/json';
+            input.onchange = (e) => {
+                const file = e.target.files[0];
+                const reader = new FileReader();
+                reader.onload = (event) => {
+                    try {
+                        const imported = JSON.parse(event.target.result);
+                        if (confirm('This will replace all your current data. Continue?')) {
+                            state = imported;
+                            saveData();
+                            updateUI();
+                            alert('Data imported successfully!');
+                        }
+                    } catch (err) {
+                        alert('Invalid backup file!');
+                    }
+                };
+                reader.readAsText(file);
+            };
+            input.click();
+        }
+
+        // ==================== UTILITIES ====================
+        function closeModal(id) {
+            document.getElementById(id).classList.remove('active');
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        // ==================== AI GOAL PARSER ====================
+        const PORTKEY_CONFIG = {
+            baseURL: 'https://api.portkey.ai',
+            apiKey: 'MfSPscvdmxTj8jGpP34lq41axRRK',
+            defaultModel: '@vertexai-global/anthropic.claude-sonnet-4-5@20250929'
+        };
+
+        async function parseGoalWithAI(goalStatement) {
+            const prompt = `You are a productivity expert helping users break down goals into actionable steps.
+
+User's goal statement: "${goalStatement}"
+
+Extract and analyze this goal:
+1. Identify the main goal
+2. Break it into 3-7 concrete, achievable steps
+3. Suggest improvements if the goal is vague or too ambitious
+4. Make steps SMART (Specific, Measurable, Achievable, Relevant, Time-bound)
+
+Respond in JSON format:
+{
+    "goalName": "Clear, concise goal name",
+    "steps": [
+        "Step 1: Specific action",
+        "Step 2: Specific action"
+    ],
+    "suggestions": "Brief improvement suggestion (optional)",
+    "dailyTask": "One small task user can do today"
+}
+
+Be encouraging and practical. Keep steps simple and achievable.`;
+
+            try {
+                const response = await fetch(PORTKEY_CONFIG.baseURL + '/v1/chat/completions', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'x-portkey-api-key': PORTKEY_CONFIG.apiKey
+                    },
+                    body: JSON.stringify({
+                        model: PORTKEY_CONFIG.defaultModel,
+                        messages: [{ role: 'user', content: prompt }],
+                        max_tokens: 1000,
+                        temperature: 0.7
+                    })
+                });
+
+                if (!response.ok) {
+                    throw new Error(`API request failed: ${response.statusText}`);
+                }
+
+                const data = await response.json();
+                const content = data.choices[0].message.content;
+
+                let jsonMatch = content.match(/```json\n([\s\S]*?)\n```/);
+                if (jsonMatch) {
+                    return JSON.parse(jsonMatch[1]);
+                }
+
+                return JSON.parse(content);
+            } catch (error) {
+                console.error('AI parsing error:', error);
+                throw error;
+            }
+        }
+
+        async function enhanceGoalWithAI(goalName, existingSteps) {
+            const prompt = `You are a productivity coach. Goal: "${goalName}"
+Current steps: ${existingSteps.join(', ')}
+
+Provide improvements, tips, and potential obstacles.
+
+Respond in JSON:
+{
+    "improvedSteps": ["step1", "step2"],
+    "tips": ["tip1", "tip2"],
+    "obstacles": [{"obstacle": "challenge", "solution": "how to overcome"}]
+}`;
+
+            try {
+                const response = await fetch(PORTKEY_CONFIG.baseURL + '/v1/chat/completions', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'x-portkey-api-key': PORTKEY_CONFIG.apiKey
+                    },
+                    body: JSON.stringify({
+                        model: PORTKEY_CONFIG.defaultModel,
+                        messages: [{ role: 'user', content: prompt }],
+                        max_tokens: 1200,
+                        temperature: 0.7
+                    })
+                });
+
+                if (!response.ok) {
+                    throw new Error(`API request failed: ${response.statusText}`);
+                }
+
+                const data = await response.json();
+                const content = data.choices[0].message.content;
+
+                let jsonMatch = content.match(/```json\n([\s\S]*?)\n```/);
+                if (jsonMatch) {
+                    return JSON.parse(jsonMatch[1]);
+                }
+
+                return JSON.parse(content);
+            } catch (error) {
+                console.error('AI enhancement error:', error);
+                throw error;
+            }
+        }
+
+        function openAIGoalParser() {
+            document.getElementById('aiGoalModal').classList.add('active');
+            document.getElementById('aiGoalInput').value = '';
+            document.getElementById('aiGoalResult').classList.add('hidden');
+            document.getElementById('aiGoalLoading').classList.add('hidden');
+            document.getElementById('aiEnhancementResult').classList.add('hidden');
+        }
+
+        async function parseGoalStatement() {
+            const input = document.getElementById('aiGoalInput').value.trim();
+
+            if (!input) {
+                alert('Please enter a goal statement');
+                return;
+            }
+
+            document.getElementById('aiGoalLoading').classList.remove('hidden');
+            document.getElementById('aiGoalResult').classList.add('hidden');
+
+            try {
+                const parsed = await parseGoalWithAI(input);
+
+                document.getElementById('aiParsedGoalName').textContent = parsed.goalName;
+
+                const stepsList = document.getElementById('aiParsedSteps');
+                stepsList.innerHTML = parsed.steps.map((step, index) =>
+                    `<li style="padding: 8px 0; display: flex; align-items: center; gap: 10px;">
+                        <input type="checkbox" id="ai-step-${index}" checked style="width: 20px; height: 20px;">
+                        <label for="ai-step-${index}" style="flex: 1; cursor: pointer;">${escapeHtml(step)}</label>
+                    </li>`
+                ).join('');
+
+                if (parsed.suggestions) {
+                    document.getElementById('aiSuggestions').textContent = parsed.suggestions;
+                    document.getElementById('aiSuggestionsSection').classList.remove('hidden');
+                } else {
+                    document.getElementById('aiSuggestionsSection').classList.add('hidden');
+                }
+
+                document.getElementById('aiDailyTask').textContent = parsed.dailyTask || parsed.steps[0];
+
+                window.tempParsedGoal = parsed;
+
+                document.getElementById('aiGoalLoading').classList.add('hidden');
+                document.getElementById('aiGoalResult').classList.remove('hidden');
+                document.getElementById('aiEnhancementResult').classList.add('hidden');
+
+            } catch (error) {
+                document.getElementById('aiGoalLoading').classList.add('hidden');
+                alert('Failed to parse goal. Please try again.\n\nError: ' + error.message);
+            }
+        }
+
+        async function enhanceCurrentGoal() {
+            if (!window.tempParsedGoal) return;
+
+            const goalName = document.getElementById('aiParsedGoalName').textContent;
+            const steps = window.tempParsedGoal.steps;
+
+            document.getElementById('aiEnhanceLoading').classList.remove('hidden');
+            document.getElementById('aiEnhancementResult').classList.add('hidden');
+
+            try {
+                const enhanced = await enhanceGoalWithAI(goalName, steps);
+
+                let html = '<div style="background: var(--bg-card); padding: 20px; border-radius: 12px; margin-top: 20px;">';
+                html += '<h3>✨ AI Enhancements</h3>';
+
+                if (enhanced.improvedSteps && enhanced.improvedSteps.length > 0) {
+                    html += '<h4 style="margin-top: 15px;">📝 Improved Steps:</h4><ul style="margin-left: 20px;">';
+                    enhanced.improvedSteps.forEach(step => {
+                        html += `<li style="margin: 8px 0;">${escapeHtml(step)}</li>`;
+                    });
+                    html += '</ul>';
+                }
+
+                if (enhanced.tips && enhanced.tips.length > 0) {
+                    html += '<h4 style="margin-top: 15px;">💡 Tips:</h4><ul style="margin-left: 20px;">';
+                    enhanced.tips.forEach(tip => {
+                        html += `<li style="margin: 8px 0;">${escapeHtml(tip)}</li>`;
+                    });
+                    html += '</ul>';
+                }
+
+                if (enhanced.obstacles && enhanced.obstacles.length > 0) {
+                    html += '<h4 style="margin-top: 15px;">⚠️ Potential Obstacles:</h4>';
+                    enhanced.obstacles.forEach(obs => {
+                        html += `<div style="margin: 10px 0; padding: 10px; background: var(--bg-secondary); border-radius: 8px;">
+                            <strong>Challenge:</strong> ${escapeHtml(obs.obstacle)}<br>
+                            <strong>Solution:</strong> ${escapeHtml(obs.solution)}
+                        </div>`;
+                    });
+                }
+
+                html += '</div>';
+
+                document.getElementById('aiEnhancementResult').innerHTML = html;
+                document.getElementById('aiEnhancementResult').classList.remove('hidden');
+                document.getElementById('aiEnhanceLoading').classList.add('hidden');
+
+            } catch (error) {
+                document.getElementById('aiEnhanceLoading').classList.add('hidden');
+                alert('Failed to enhance goal.\n\nError: ' + error.message);
+            }
+        }
+
+        function createGoalFromAI() {
+            if (!window.tempParsedGoal) return;
+
+            const goalName = document.getElementById('aiParsedGoalName').textContent;
+            const dailyTask = document.getElementById('aiDailyTask').textContent;
+
+            const selectedSteps = [];
+            window.tempParsedGoal.steps.forEach((step, index) => {
+                const checkbox = document.getElementById(`ai-step-${index}`);
+                if (checkbox && checkbox.checked) {
+                    selectedSteps.push({
+                        id: Date.now() + index,
+                        text: step,
+                        completed: false
+                    });
+                }
+            });
+
+            const goal = {
+                id: Date.now(),
+                name: goalName,
+                steps: selectedSteps,
+                createdAt: new Date().toISOString()
+            };
+
+            state.goals.push(goal);
+            saveData();
+            renderGoals();
+
+            closeModal('aiGoalModal');
+
+            if (confirm('Goal created! 🎉\n\nAdd "' + dailyTask + '" to today\'s tasks?')) {
+                addTaskFromGoal(dailyTask);
+            }
+
+            celebrate();
+            showRandomQuote();
+        }
+
+        // ==================== START ====================
+        window.addEventListener('DOMContentLoaded', init);
+
+        // Save data before page unload
+        window.addEventListener('beforeunload', saveData);
+    </script>
+</body>
+</html>

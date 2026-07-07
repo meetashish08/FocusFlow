@@ -1,0 +1,113 @@
+╔══════════════════════════════════════════════════════════════╗
+║                                                              ║
+║              🚀 FOCUSFLOW - QUICK SETUP GUIDE 🚀            ║
+║                                                              ║
+╚══════════════════════════════════════════════════════════════╝
+
+⚡ 3-MINUTE SETUP
+
+Step 1: OPEN FOCUSFLOW (30 seconds)
+═══════════════════════════════════════════════════════════════
+→ Double-click: Start-FocusFlow.bat
+   OR
+→ Double-click: FocusFlow.html
+
+→ Click "Allow" when browser asks for notification permission
+
+✅ FocusFlow is now running!
+
+
+Step 2: SET UP HOURLY REMINDERS (2 minutes)
+═══════════════════════════════════════════════════════════════
+→ Right-click: Setup-FocusFlow-Reminders.ps1
+→ Select: "Run with PowerShell"
+→ If security warning appears, type: Y  [Enter]
+
+✅ You'll now get reminders every hour (8 AM - 10 PM)!
+
+
+Step 3: START BEING PRODUCTIVE (Now!)
+═══════════════════════════════════════════════════════════════
+→ Add your first task
+→ Set your first goal
+→ Start the focus timer
+
+✅ You're all set!
+
+
+╔══════════════════════════════════════════════════════════════╗
+║                    DAILY WORKFLOW                            ║
+╚══════════════════════════════════════════════════════════════╝
+
+MORNING:
+□ Open FocusFlow (or it opens automatically if you chose)
+□ Add 3-5 tasks for today
+□ Set priorities
+
+DURING DAY:
+□ Check off tasks as you complete them
+□ Use Focus Timer for deep work
+□ Respond to hourly reminders
+
+EVENING (after 6 PM):
+□ Click "Plan Tomorrow 🌙"
+□ Add tasks for next day
+□ Review your goals
+□ Feel accomplished!
+
+
+╔══════════════════════════════════════════════════════════════╗
+║                  FEATURES AT A GLANCE                        ║
+╚══════════════════════════════════════════════════════════════╝
+
+🔥 STREAKS        - Track consecutive productive days
+⭐ XP SYSTEM      - Earn points for completing tasks
+⏱️  FOCUS TIMER   - Pomodoro technique (25 min / 5 min)
+🎯 GOALS          - Break big goals into small daily steps
+🌙 PLAN TOMORROW  - Evening planning mode
+⏰ HOURLY NUDGES  - Desktop reminders every hour
+💬 QUOTES         - 50+ motivational messages
+🎉 CELEBRATIONS   - Confetti & sounds for wins
+💾 BACKUP         - Export/import your data anytime
+
+
+╔══════════════════════════════════════════════════════════════╗
+║                    EARN XP & LEVEL UP                        ║
+╚══════════════════════════════════════════════════════════════╝
+
+Complete Task       →  +10 XP  ✅
+Focus Session       →  +25 XP  ⏱️
+Goal Step           →  +5 XP   🎯
+7-Day Streak Bonus  →  +50 XP  🔥
+
+
+╔══════════════════════════════════════════════════════════════╗
+║                   OPTIONAL: AUTO-START                       ║
+╚══════════════════════════════════════════════════════════════╝
+
+Want FocusFlow to open automatically when you log in?
+
+Run this command:
+→ .\Setup-FocusFlow-Reminders.ps1 -AddStartup
+
+Now FocusFlow opens every time you start Windows!
+
+
+╔══════════════════════════════════════════════════════════════╗
+║                        NEED HELP?                            ║
+╚══════════════════════════════════════════════════════════════╝
+
+→ Read: FocusFlow_README.md (Complete documentation)
+→ Test: Click "🔔 Test Reminder" button in Quick Actions
+→ Backup: Click "💾 Export Data" to save your progress
+
+
+╔══════════════════════════════════════════════════════════════╗
+║                    YOU'RE READY TO GO! 🎉                   ║
+╚══════════════════════════════════════════════════════════════╝
+
+"Your only limit is you."
+
+Start small. Stay consistent. Watch yourself achieve more.
+
+Happy focusing! 🚀✨
