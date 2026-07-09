@@ -1308,6 +1308,15 @@ Make subtasks specific, measurable, and sequential.`;
         function renderTasks() {
             const container = document.getElementById('taskList');
 
+            // Preserve expanded state before re-rendering
+            const expandedTasks = new Set();
+            state.tasks.forEach(task => {
+                const panel = document.getElementById(`subtasks-${task.id}`);
+                if (panel && !panel.classList.contains('hidden')) {
+                    expandedTasks.add(task.id);
+                }
+            });
+
             if (state.tasks.length === 0) {
                 container.innerHTML = `
                     <div class="empty-state">
@@ -1322,11 +1331,12 @@ Make subtasks specific, measurable, and sequential.`;
                 const subtaskCount = task.subtasks ? task.subtasks.length : 0;
                 const completedSubtasks = task.subtasks ? task.subtasks.filter(s => s.completed).length : 0;
                 const hasSubtasks = subtaskCount > 0;
+                const isExpanded = expandedTasks.has(task.id);
 
                 return `
                 <div class="task-item-wrapper" style="margin-bottom: 15px;">
                     <div class="task-item ${task.completed ? 'completed' : ''}">
-                        ${hasSubtasks ? `<span id="arrow-${task.id}" onclick="toggleTaskExpand(${task.id})" style="cursor: pointer; margin-right: 8px; user-select: none;">▶</span>` : ''}
+                        ${hasSubtasks ? `<span id="arrow-${task.id}" onclick="toggleTaskExpand(${task.id})" style="cursor: pointer; margin-right: 8px; user-select: none;">${isExpanded ? '▼' : '▶'}</span>` : ''}
                         <input type="checkbox" class="task-checkbox" ${task.completed ? 'checked' : ''}
                                onchange="toggleTask(${task.id})">
                         <div class="task-text" onclick="toggleTaskExpand(${task.id})" style="cursor: pointer;">${escapeHtml(task.text)}</div>
@@ -1344,7 +1354,7 @@ Make subtasks specific, measurable, and sequential.`;
                         <button class="task-delete" onclick="deleteTask(${task.id})">🗑️</button>
                     </div>
 
-                    <div id="subtasks-${task.id}" class="hidden" style="margin-left: 40px; margin-top: 10px; padding: 10px; background: rgba(255,255,255,0.03); border-radius: 8px;">
+                    <div id="subtasks-${task.id}" class="${isExpanded ? '' : 'hidden'}" style="margin-left: 40px; margin-top: 10px; padding: 10px; background: rgba(255,255,255,0.03); border-radius: 8px;">
                         ${hasSubtasks ? `
                             <div style="margin-bottom: 10px;">
                                 <div style="background: var(--bg-card); height: 6px; border-radius: 10px; overflow: hidden;">
