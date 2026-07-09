@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>FocusFlow - Your Daily Productivity Companion</title>
+    <title>FocusFlow (Shared) - Your Daily Productivity Companion</title>
 
     <!-- Favicon -->
     <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><defs><linearGradient id='grad' x1='0%25' y1='0%25' x2='100%25' y2='100%25'><stop offset='0%25' style='stop-color:%23667eea;stop-opacity:1' /><stop offset='100%25' style='stop-color:%23764ba2;stop-opacity:1' /></linearGradient></defs><circle cx='50' cy='50' r='45' fill='url(%23grad)'/><text x='50' y='70' font-size='60' text-anchor='middle' fill='white'>🚀</text></svg>">
@@ -692,6 +692,7 @@
                 <div style="display: flex; flex-direction: column; gap: 15px;">
                     <button class="btn" onclick="openPlanTomorrow()">🌙 Plan Tomorrow</button>
                     <button class="btn btn-secondary" onclick="reviewGoals()">🔍 Review Goals</button>
+                    <button class="btn btn-secondary" onclick="openApiKeySettings()">⚙️ API Settings</button>
                     <button class="btn btn-secondary" onclick="exportData()">💾 Export Data</button>
                     <button class="btn btn-secondary" onclick="importData()">📥 Import Data</button>
                     <button class="btn btn-secondary" onclick="testReminder()">🔔 Test Reminder</button>
@@ -858,6 +859,57 @@
                         </button>
                     </div>
                 </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- API Key Configuration Modal -->
+    <div class="modal active" id="apiKeyModal">
+        <div class="modal-content" style="max-width: 600px;">
+            <div class="modal-header">
+                <h2>🔑 API Configuration</h2>
+                <button class="modal-close" onclick="closeModal('apiKeyModal')">&times;</button>
+            </div>
+            <div>
+                <p style="margin-bottom: 20px; opacity: 0.9;">
+                    To use AI features (Goal Parser, Subtask Generation), please configure your Portkey API key.
+                </p>
+
+                <div style="background: rgba(255, 215, 0, 0.1); padding: 15px; border-radius: 10px; margin-bottom: 20px; border-left: 3px solid var(--warning);">
+                    <strong>🔒 Privacy & Security:</strong>
+                    <ul style="margin: 10px 0 0 20px; opacity: 0.9;">
+                        <li>Your API key is stored locally in your browser</li>
+                        <li>It never leaves your computer</li>
+                        <li>You can remove it anytime from Quick Actions</li>
+                    </ul>
+                </div>
+
+                <label style="display: block; margin-bottom: 5px; font-weight: bold;">Portkey API Key: *</label>
+                <input type="password" id="apiKeyInput"
+                       placeholder="Enter your Portkey API key..."
+                       style="width: 100%; margin-bottom: 20px; font-family: monospace;">
+
+                <label style="display: block; margin-bottom: 5px; font-weight: bold;">Model (Optional):</label>
+                <input type="text" id="modelInput"
+                       placeholder="@vertexai-global/anthropic.claude-sonnet-4-5@20250929"
+                       value="@vertexai-global/anthropic.claude-sonnet-4-5@20250929"
+                       style="width: 100%; margin-bottom: 20px; font-size: 0.9em;">
+
+                <div style="background: rgba(0, 212, 170, 0.1); padding: 12px; border-radius: 8px; margin-bottom: 20px; border-left: 3px solid var(--success);">
+                    <strong>💡 Don't have a Portkey API key?</strong><br>
+                    <p style="margin: 5px 0 0 0; opacity: 0.9; font-size: 0.9em;">
+                        Get one from <a href="https://portkey.ai" target="_blank" style="color: var(--accent);">portkey.ai</a> - Free tier available!
+                    </p>
+                </div>
+
+                <div style="display: flex; gap: 10px;">
+                    <button class="btn" onclick="saveApiKey()">💾 Save & Continue</button>
+                    <button class="btn btn-secondary" onclick="closeModal('apiKeyModal')">Skip (AI features disabled)</button>
+                </div>
+
+                <p style="margin-top: 15px; font-size: 0.85em; opacity: 0.6;">
+                    * You can update this later from Quick Actions → "⚙️ API Settings"
+                </p>
             </div>
         </div>
     </div>
@@ -1900,11 +1952,69 @@ Make subtasks specific, measurable, and sequential.`;
         }
 
         // ==================== AI GOAL PARSER ====================
-        const PORTKEY_CONFIG = {
-            baseURL: 'https://api.portkey.ai',
-            apiKey: 'MfSPscvdmxTj8jGpP34lq41axRRK',
-            defaultModel: '@vertexai-global/anthropic.claude-sonnet-4-5@20250929'
-        };
+        // Initialize API configuration from localStorage or prompt user
+        function getPortkeyConfig() {
+            let apiKey = localStorage.getItem('focusflow_portkey_api_key');
+
+            if (!apiKey) {
+                // Show configuration modal on first use
+                setTimeout(() => {
+                    document.getElementById('apiKeyModal').classList.add('active');
+                }, 1000);
+                return null;
+            }
+
+            return {
+                baseURL: 'https://api.portkey.ai',
+                apiKey: apiKey,
+                defaultModel: localStorage.getItem('focusflow_portkey_model') || '@vertexai-global/anthropic.claude-sonnet-4-5@20250929'
+            };
+        }
+
+        let PORTKEY_CONFIG = getPortkeyConfig();
+
+        function saveApiKey() {
+            const apiKey = document.getElementById('apiKeyInput').value.trim();
+            const model = document.getElementById('modelInput').value.trim();
+
+            if (!apiKey) {
+                alert('Please enter a valid Portkey API key');
+                return;
+            }
+
+            localStorage.setItem('focusflow_portkey_api_key', apiKey);
+            if (model) {
+                localStorage.setItem('focusflow_portkey_model', model);
+            }
+
+            PORTKEY_CONFIG = {
+                baseURL: 'https://api.portkey.ai',
+                apiKey: apiKey,
+                defaultModel: model || '@vertexai-global/anthropic.claude-sonnet-4-5@20250929'
+            };
+
+            closeModal('apiKeyModal');
+            alert('✅ API key saved! AI features are now enabled.');
+        }
+
+        function openApiKeySettings() {
+            const currentKey = localStorage.getItem('focusflow_portkey_api_key') || '';
+            const currentModel = localStorage.getItem('focusflow_portkey_model') || '@vertexai-global/anthropic.claude-sonnet-4-5@20250929';
+
+            document.getElementById('apiKeyInput').value = currentKey;
+            document.getElementById('modelInput').value = currentModel;
+            document.getElementById('apiKeyModal').classList.add('active');
+        }
+
+        function clearApiKey() {
+            if (confirm('Are you sure you want to remove the API key? AI features will be disabled.')) {
+                localStorage.removeItem('focusflow_portkey_api_key');
+                localStorage.removeItem('focusflow_portkey_model');
+                PORTKEY_CONFIG = null;
+                closeModal('apiKeyModal');
+                alert('API key removed. Refresh the page to reconfigure.');
+            }
+        }
 
         async function parseGoalWithAI(goalStatement) {
             const prompt = `You are a productivity expert helping users break down goals into actionable steps.
